@@ -1,0 +1,5 @@
+.env
+venv/
+intellisupa/
+__pycache__/
+*.pyc

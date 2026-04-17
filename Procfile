@@ -1,0 +1,1 @@
+web:uvicorn main:app --hosty 0.0.0.0 --port $PORT

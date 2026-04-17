@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IntelliSupa AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --border: #e4e4e7;
+      --text: #18181b;
+      --muted: #71717a;
+      --accent: #18181b;
+      --green: #16a34a;
+      --red: #dc2626;
+      --terminal-bg: #1c1c1e;
+      --terminal-text: #e2e8f0;
+      --terminal-green: #4ade80;
+      --terminal-muted: #64748b;
+      --terminal-amber: #fbbf24;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .logo span { color: var(--muted); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .conn-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--muted);
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+    }
+
+    .conn-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #d4d4d8;
+    }
+
+    .conn-dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 6px rgba(22,163,74,0.4);
+    }
+
+    .btn-settings {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-settings:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 760px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── Setup Banner ── */
+    #setup-banner {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #92400e;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    #setup-banner.show { display: flex; }
+
+    .btn-setup-now {
+      padding: 6px 14px;
+      background: #92400e;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ── Settings Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      width: 100%;
+      max-width: 460px;
+      margin: 24px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .modal-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 16px;
+    }
+
+    .field-input:focus { border-color: var(--text); }
+
+    .modal-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border-radius: 6px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .btn-save {
+      padding: 8px 16px;
+      background: var(--text);
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* ── Query Input ── */
+    .query-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .query-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    .query-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .query-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .query-input:focus { border-color: var(--text); }
+    .query-input::placeholder { color: #a1a1aa; }
+
+    .btn-run {
+      padding: 10px 18px;
+      background: var(--text);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-run:hover { opacity: 0.85; }
+    .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Suggestions ── */
+    .suggestions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 4px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .chip:hover { border-color: var(--text); color: var(--text); }
+
+    /* ── Terminal Window ── */
+    .terminal-window {
+      background: var(--terminal-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #2d2d2d;
+    }
+
+    .terminal-bar {
+      background: #2d2d2d;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .t-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .t-red { background: #ff5f56; }
+    .t-yellow { background: #ffbd2e; }
+    .t-green { background: #27c93f; }
+
+    .t-title {
+      margin-left: 8px;
+      font-size: 11px;
+      color: #666;
+      font-family: 'JetBrains Mono', monospace;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-clear-t {
+      font-size: 10px;
+      color: #555;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 3px;
+      transition: color 0.15s;
+    }
+
+    .btn-clear-t:hover { color: #999; }
+
+    /* ── Terminal Output ── */
+    #terminal-output {
+      padding: 16px 20px;
+      min-height: 280px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    #terminal-output::-webkit-scrollbar { width: 4px; }
+    #terminal-output::-webkit-scrollbar-track { background: transparent; }
+    #terminal-output::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .t-line { display: flex; gap: 10px; }
+
+    .t-prefix { flex-shrink: 0; }
+    .t-prefix.sys { color: #4a5568; }
+    .t-prefix.query { color: var(--terminal-amber); }
+    .t-prefix.out { color: var(--terminal-green); }
+    .t-prefix.err { color: #f87171; }
+
+    .t-content { color: var(--terminal-text); white-space: pre-wrap; word-break: break-word; }
+    .t-content.dim { color: var(--terminal-muted); }
+    .t-content.success { color: var(--terminal-green); }
+    .t-content.error { color: #f87171; }
+    .t-content.info { color: var(--terminal-amber); }
+
+    .t-spacer { height: 6px; }
+
+    /* Spinner */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">IntelliSupa<span>.ai</span></div>
+    <div class="header-right">
+      <div class="conn-badge">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-text">not connected</span>
+      </div>
+      <button class="btn-settings" onclick="openSettings()">⚙ Settings</button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main>
+
+    <!-- Setup Banner -->
+    <div id="setup-banner">
+      <span>⚠ No Supabase token found. Add your access token to start querying your database.</span>
+      <button class="btn-setup-now" onclick="openSettings()">Add Token</button>
+    </div>
+
+    <!-- Query Box -->
+    <div class="query-box">
+      <div class="query-label">Natural Language Query</div>
+      <div class="query-row">
+        <input
+          type="text"
+          class="query-input"
+          id="query-input"
+          placeholder="What tables do I have? Show me all customers..."
+          onkeydown="handleKey(event)"
+        />
+        <button class="btn-run" id="run-btn" onclick="runQuery()">▶ Run</button>
+      </div>
+      <div class="suggestions">
+        <span class="chip" onclick="fill('What tables do I have?')">list tables</span>
+        <span class="chip" onclick="fill('Show me all records')">all records</span>
+        <span class="chip" onclick="fill('How many rows in each table?')">row counts</span>
+        <span class="chip" onclick="fill('Describe the database schema')">schema</span>
+        <span class="chip" onclick="fill('Show the last 5 entries')">recent entries</span>
+      </div>
+    </div>
+
+    <!-- Terminal Output -->
+    <div class="terminal-window">
+      <div class="terminal-bar">
+        <div class="t-dot t-red"></div>
+        <div class="t-dot t-yellow"></div>
+        <div class="t-dot t-green"></div>
+        <div class="t-title">output — intellisupa agent</div>
+        <button class="btn-clear-t" onclick="clearTerminal()">clear</button>
+      </div>
+      <div id="terminal-output"></div>
+    </div>
+
+  </main>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-title">Connect Your Database</div>
+      <div class="modal-sub">Add your Supabase Personal Access Token. It's stored only in your browser — never sent to our servers.</div>
+
+      <label class="field-label">Supabase Access Token</label>
+      <input
+        type="password"
+        class="field-input"
+        id="token-input"
+        placeholder="sbp_xxxxxxxxxxxxxxxxxxxx"
+      />
+
+      <div class="modal-note">
+        🔒 Your token is stored in localStorage and never leaves your browser.<br/>
+        Get your token: supabase.com → Account → Access Tokens
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+        <button class="btn-save" onclick="saveToken()">Save & Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isRunning = false
+    let queryCount = 0
+    const output = document.getElementById('terminal-output')
+
+    // ── Token Management ──
+    function getToken() {
+      return localStorage.getItem('supabase_token') || ''
+    }
+
+    function saveToken() {
+      const token = document.getElementById('token-input').value.trim()
+      if (!token) {
+        alert('Please enter your token')
+        return
+      }
+      localStorage.setItem('supabase_token', token)
+      closeSettings()
+      updateConnectionStatus(true)
+      addLine('sys', '[ SYS ]', 'Token saved. Connected to your Supabase.', 'success')
+      addSpacer()
+    }
+
+    function updateConnectionStatus(connected) {
+      const dot = document.getElementById('conn-dot')
+      const text = document.getElementById('conn-text')
+      const banner = document.getElementById('setup-banner')
+
+      if (connected) {
+        dot.classList.add('connected')
+        text.textContent = 'connected'
+        banner.classList.remove('show')
+      } else {
+        dot.classList.remove('connected')
+        text.textContent = 'not connected'
+        banner.classList.add('show')
+      }
+    }
+
+    function openSettings() {
+      const token = getToken()
+      if (token) {
+        document.getElementById('token-input').value = token
+      }
+      document.getElementById('modal').classList.add('show')
+    }
+
+    function closeSettings() {
+      document.getElementById('modal').classList.remove('show')
+    }
+
+    // ── Terminal Helpers ──
+    function addLine(type, prefix, text, cls = '') {
+      const line = document.createElement('div')
+      line.className = 't-line'
+
+      const p = document.createElement('span')
+      p.className = `t-prefix ${type}`
+      p.textContent = prefix
+
+      const c = document.createElement('span')
+      c.className = `t-content ${cls}`
+      c.textContent = text
+
+      line.appendChild(p)
+      line.appendChild(c)
+      output.appendChild(line)
+      output.scrollTop = output.scrollHeight
+      return c
+    }
+
+    function addSpacer() {
+      const s = document.createElement('div')
+      s.className = 't-spacer'
+      output.appendChild(s)
+    }
+
+    function clearTerminal() {
+      output.innerHTML = ''
+      addLine('sys', '[ SYS ]', 'Terminal cleared.', 'dim')
+      addSpacer()
+    }
+
+    // ── Query ──
+    async function runQuery() {
+      const input = document.getElementById('query-input')
+      const query = input.value.trim()
+      if (!query || isRunning) return
+
+      const token = getToken()
+      if (!token) {
+        openSettings()
+        return
+      }
+
+      isRunning = true
+      queryCount++
+      document.getElementById('run-btn').disabled = true
+      input.value = ''
+
+      addSpacer()
+      addLine('query', `[${String(queryCount).padStart(2,'0')}] ❯`, query, 'info')
+      addSpacer()
+
+      const thinking = addLine('sys', '[ AI  ]', '⟳ Processing...', 'dim')
+
+      let frames = ['⟳', '⟲', '↻', '↺']
+      let f = 0
+      const interval = setInterval(() => {
+        thinking.textContent = frames[f % frames.length] + ' Processing...'
+        f++
+      }, 200)
+
+      const start = Date.now()
+
+      try {
+        const res = await fetch('/query', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Supabase-Token': token
+          },
+          body: JSON.stringify({ question: query })
+        })
+
+        const data = await res.json()
+        const ms = Date.now() - start
+        clearInterval(interval)
+
+        thinking.textContent = `✓ Done in ${ms}ms`
+        thinking.className = 't-content success'
+
+        addSpacer()
+
+        if (data.status === 'success') {
+          const lines = (data.answer || '').split('\n')
+          lines.forEach(line => {
+            if (line.trim()) {
+              addLine('out', '[ OUT ]', line)
+            }
+          })
+        } else {
+          addLine('out', '[ ERR ]', data.detail || 'Error occurred', 'error')
+        }
+
+      } catch(e) {
+        clearInterval(interval)
+        thinking.textContent = '✗ Connection failed'
+        thinking.className = 't-content error'
+        addSpacer()
+        addLine('out', '[ ERR ]', 'Cannot reach server. Is uvicorn running?', 'error')
+      }
+
+      addSpacer()
+      addLine('sys', '', '─'.repeat(48), 'dim')
+      addSpacer()
+
+      isRunning = false
+      document.getElementById('run-btn').disabled = false
+      input.focus()
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter') runQuery()
+    }
+
+    function fill(text) {
+      document.getElementById('query-input').value = text
+      document.getElementById('query-input').focus()
+    }
+
+    // ── Init ──
+    window.onload = () => {
+      const token = getToken()
+      updateConnectionStatus(!!token)
+
+      addLine('sys', '[ SYS ]', 'IntelliSupa AI — Natural Language Database Agent', 'success')
+      addLine('sys', '[ SYS ]', 'Powered by Gemini + Supabase MCP', 'dim')
+      addSpacer()
+
+      if (token) {
+        addLine('sys', '[ SYS ]', '✓ Token loaded from browser storage', 'success')
+      } else {
+        addLine('sys', '[ SYS ]', '⚠ No token found. Click Settings to connect.', 'info')
+      }
+
+      addSpacer()
+      addLine('sys', '', '─'.repeat(48), 'dim')
+      addSpacer()
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeSettings()
+    })
+  </script>
+
+</body>
+</html>
